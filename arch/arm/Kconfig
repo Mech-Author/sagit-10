@@ -1563,6 +1563,11 @@ config HZ_FIXED
 
 choice
 	depends on HZ_FIXED = 0
+	default AT91_TIMER_HZ if ARCH_AT91
+	default SHMOBILE_TIMER_HZ if ARCH_SHMOBILE
+
+choice
+	depends on !HZ_FIXED
 	prompt "Timer frequency"
 
 config HZ_100
@@ -1587,13 +1592,16 @@ endchoice
 
 config HZ
 	int
-	default HZ_FIXED if HZ_FIXED != 0
+	default HZ_FIXED if HZ_FIXED
 	default 100 if HZ_100
 	default 200 if HZ_200
 	default 250 if HZ_250
 	default 300 if HZ_300
 	default 500 if HZ_500
 	default 1000
+
+config SCHED_HRTICK
+	def_bool HIGH_RES_TIMERS
 
 config SCHED_HRTICK
 	def_bool HIGH_RES_TIMERS
