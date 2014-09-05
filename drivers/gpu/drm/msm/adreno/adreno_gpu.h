@@ -238,8 +238,7 @@ void adreno_wait_ring(struct msm_ringbuffer *ring, uint32_t ndwords);
 struct msm_ringbuffer *adreno_active_ring(struct msm_gpu *gpu);
 
 int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
-		struct adreno_gpu *gpu, const struct adreno_gpu_funcs *funcs,
-		struct msm_gpu_config *config);
+		struct adreno_gpu *gpu, const struct adreno_gpu_funcs *funcs);
 void adreno_gpu_cleanup(struct adreno_gpu *gpu);
 
 void adreno_snapshot(struct msm_gpu *gpu, struct msm_snapshot *snapshot);

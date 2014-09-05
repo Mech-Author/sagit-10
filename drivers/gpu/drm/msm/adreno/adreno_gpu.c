@@ -507,12 +507,11 @@ static int adreno_of_parse(struct platform_device *pdev, struct msm_gpu *gpu)
 }
 
 int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
-		struct adreno_gpu *adreno_gpu,
-		const struct adreno_gpu_funcs *funcs,
-		struct msm_gpu_config *gpu_config)
+		struct adreno_gpu *adreno_gpu, const struct adreno_gpu_funcs *funcs)
 {
 	struct adreno_platform_config *config = pdev->dev.platform_data;
 	struct msm_gpu *gpu = &adreno_gpu->base;
+	struct msm_mmu *mmu;
 	int ret;
 
 	adreno_gpu->funcs = funcs;
@@ -521,81 +520,66 @@ int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	adreno_gpu->revn = adreno_gpu->info->revn;
 	adreno_gpu->rev = config->rev;
 
-	/* Get the rest of the target configuration from the device tree */
-	adreno_of_parse(pdev, gpu);
+	gpu->fast_rate = config->fast_rate;
+	gpu->slow_rate = config->slow_rate;
+	gpu->bus_freq  = config->bus_freq;
+#ifdef CONFIG_MSM_BUS_SCALING
+	gpu->bus_scale_table = config->bus_scale_table;
+#endif
 
-	ret = msm_gpu_init(drm, pdev, &adreno_gpu->base, &funcs->base,
-			adreno_gpu->info->name, gpu_config);
-	if (ret)
-		return ret;
-
-	pm_runtime_set_autosuspend_delay(&pdev->dev, DRM_MSM_INACTIVE_PERIOD);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	DBG("fast_rate=%u, slow_rate=%u, bus_freq=%u",
+			gpu->fast_rate, gpu->slow_rate, gpu->bus_freq);
 
 	ret = request_firmware(&adreno_gpu->pm4, adreno_gpu->info->pm4fw, drm->dev);
 	if (ret) {
 		dev_err(drm->dev, "failed to load %s PM4 firmware: %d\n",
 				adreno_gpu->info->pm4fw, ret);
 		return ret;
-	}
 
 	ret = request_firmware(&adreno_gpu->pfp, adreno_gpu->info->pfpfw, drm->dev);
+	if (ret) {
+		dev_err(drm->dev, "failed to load %s PFP firmware: %d\n",
+				adreno_gpu->info->pfpfw, ret);
+		return ret;
+	}
+
+	ret = msm_gpu_init(drm, pdev, &adreno_gpu->base, &funcs->base,
+			adreno_gpu->info->name, "kgsl_3d0_reg_memory", "kgsl_3d0_irq",
+			RB_SIZE);
 	if (ret)
 		dev_err(drm->dev, "failed to load %s PFP firmware: %d\n",
 				adreno_gpu->info->pfpfw, ret);
 
-	return ret;
-}
+	mmu = gpu->mmu;
+	if (mmu) {
+		ret = mmu->funcs->attach(mmu, iommu_ports,
+				ARRAY_SIZE(iommu_ports));
+		if (ret)
+			return ret;
+	}
 
-void adreno_gpu_cleanup(struct adreno_gpu *adreno_gpu)
-{
-	struct msm_gpu *gpu = &adreno_gpu->base;
-	struct drm_device *dev = gpu->dev;
-	struct msm_drm_private *priv = dev->dev_private;
-	struct platform_device *pdev = priv->gpu_pdev;
+	mutex_lock(&drm->struct_mutex);
+	adreno_gpu->memptrs_bo = msm_gem_new(drm, sizeof(*adreno_gpu->memptrs),
+			MSM_BO_UNCACHED);
+	mutex_unlock(&drm->struct_mutex);
+	if (IS_ERR(adreno_gpu->memptrs_bo)) {
+		ret = PTR_ERR(adreno_gpu->memptrs_bo);
+		adreno_gpu->memptrs_bo = NULL;
+		dev_err(drm->dev, "could not allocate memptrs: %d\n", ret);
+		return ret;
+	}
 
-	release_firmware(adreno_gpu->pm4);
-	release_firmware(adreno_gpu->pfp);
+	adreno_gpu->memptrs = msm_gem_vaddr(adreno_gpu->memptrs_bo);
+	if (!adreno_gpu->memptrs) {
+		dev_err(drm->dev, "could not vmap memptrs\n");
+		return -ENOMEM;
+	}
 
-	pm_runtime_disable(&pdev->dev);
-	msm_gpu_cleanup(gpu);
-}
-
-static void adreno_snapshot_os(struct msm_gpu *gpu,
-		struct msm_snapshot *snapshot)
-{
-	struct msm_snapshot_linux header;
-
-	memset(&header, 0, sizeof(header));
-
-	header.osid = SNAPSHOT_OS_LINUX_V3;
-	strlcpy(header.release, utsname()->release, sizeof(header.release));
-	strlcpy(header.version, utsname()->version, sizeof(header.version));
-
-	header.seconds = get_seconds();
-	header.ctxtcount = 0;
-
-	SNAPSHOT_HEADER(snapshot, header, SNAPSHOT_SECTION_OS, 0);
-}
-
-static void adreno_snapshot_ringbuffer(struct msm_gpu *gpu,
-		struct msm_snapshot *snapshot, struct msm_ringbuffer *ring)
-{
-	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	struct msm_snapshot_ringbuffer header;
-	unsigned int i, end = 0;
-	unsigned int *data = ring->start;
-
-	memset(&header, 0, sizeof(header));
-
-	/*
-	 * We only want to copy the active contents of each ring, so find the
-	 * last valid entry in the ringbuffer
-	 */
-	for (i = 0; i < MSM_GPU_RINGBUFFER_SZ >> 2; i++) {
-		if (data[i])
-			end = i;
+	ret = msm_gem_get_iova(adreno_gpu->memptrs_bo, gpu->id,
+			&adreno_gpu->memptrs_iova);
+	if (ret) {
+		dev_err(drm->dev, "could not map memptrs: %d\n", ret);
+		return ret;
 	}
 
 	/* The dump always starts at 0 */
