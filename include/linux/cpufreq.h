@@ -538,69 +538,36 @@ static inline unsigned long cpufreq_scale(unsigned long old, u_int div,
  *********************************************************************/
 
 /*
- * If (cpufreq_driver->target) exists, the ->governor decides what frequency
- * within the limits is used. If (cpufreq_driver->setpolicy> exists, these
- * two generic policies are available:
- */
-#define CPUFREQ_POLICY_POWERSAVE	(1)
-#define CPUFREQ_POLICY_PERFORMANCE	(2)
-
-/* Governor Events */
-#define CPUFREQ_GOV_START	1
-#define CPUFREQ_GOV_STOP	2
-#define CPUFREQ_GOV_LIMITS	3
-#define CPUFREQ_GOV_POLICY_INIT	4
-#define CPUFREQ_GOV_POLICY_EXIT	5
-
-struct cpufreq_governor {
-	char	name[CPUFREQ_NAME_LEN];
-	int	initialized;
-	int	(*governor)	(struct cpufreq_policy *policy,
-				 unsigned int event);
-	ssize_t	(*show_setspeed)	(struct cpufreq_policy *policy,
-					 char *buf);
-	int	(*store_setspeed)	(struct cpufreq_policy *policy,
-					 unsigned int freq);
-	unsigned int max_transition_latency; /* HW must be able to switch to
-			next freq faster than this value in nano secs or we
-			will fallback to performance governor */
-	struct list_head	governor_list;
-	struct module		*owner;
-};
-
-/* Pass a target to the cpufreq driver */
-int cpufreq_driver_target(struct cpufreq_policy *policy,
-				 unsigned int target_freq,
-				 unsigned int relation);
-int __cpufreq_driver_target(struct cpufreq_policy *policy,
-				   unsigned int target_freq,
-				   unsigned int relation);
-unsigned int cpufreq_driver_resolve_freq(struct cpufreq_policy *policy,
-					 unsigned int target_freq);
-int cpufreq_register_governor(struct cpufreq_governor *governor);
-void cpufreq_unregister_governor(struct cpufreq_governor *governor);
-
-struct cpufreq_governor *cpufreq_default_governor(void);
-struct cpufreq_governor *cpufreq_fallback_governor(void);
-
-static inline void cpufreq_policy_apply_limits(struct cpufreq_policy *policy)
-{
-	if (policy->max < policy->cur)
-		__cpufreq_driver_target(policy, policy->max, CPUFREQ_RELATION_H);
-	else if (policy->min > policy->cur)
-		__cpufreq_driver_target(policy, policy->min, CPUFREQ_RELATION_L);
-}
-
-/* Governor attribute set */
-struct gov_attr_set {
-	struct kobject kobj;
-	struct list_head policy_list;
-	struct mutex update_lock;
-	int usage_count;
-};
-
-/* sysfs ops for cpufreq governors */
-extern const struct sysfs_ops governor_sysfs_ops;
+  Performance governor is fallback governor if any other gov failed to
+  auto load due latency restrictions
+*/
+#ifdef CONFIG_CPU_FREQ_GOV_PERFORMANCE
+extern struct cpufreq_governor cpufreq_gov_performance;
+#endif
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_performance)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_POWERSAVE)
+extern struct cpufreq_governor cpufreq_gov_powersave;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_powersave)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_USERSPACE)
+extern struct cpufreq_governor cpufreq_gov_userspace;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_userspace)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND)
+extern struct cpufreq_governor cpufreq_gov_ondemand;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_ondemand)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE)
+extern struct cpufreq_governor cpufreq_gov_conservative;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_conservative)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE)
+extern struct cpufreq_governor cpufreq_gov_interactive;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_interactive)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_LOLZNAPPY)
+extern struct cpufreq_governor cpufreq_gov_lolznappy;
+#define CPUFREQ_DEFAULT_GOVERNOR        (&cpufreq_gov_lolznappy)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_BLU_ACTIVE)
+extern struct cpufreq_governor cpufreq_gov_blu_active;
+#define CPUFREQ_DEFAULT_GOVERNOR        (&cpufreq_gov_blu_active)
+#endif
 
 void gov_attr_set_init(struct gov_attr_set *attr_set, struct list_head *list_node);
 void gov_attr_set_get(struct gov_attr_set *attr_set, struct list_head *list_node);
