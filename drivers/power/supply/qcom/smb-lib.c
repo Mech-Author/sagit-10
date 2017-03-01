@@ -490,20 +490,46 @@ static int smblib_set_usb_pd_allowed_voltage(struct smb_charger *chg,
 /********************
  * HELPER FUNCTIONS *
  ********************/
-static int smblib_request_dpdm(struct smb_charger *chg, bool enable)
+
+static void smblib_rerun_apsd(struct smb_charger *chg)
+{
+	int rc;
+
+	smblib_dbg(chg, PR_MISC, "re-running APSD\n");
+	if (chg->wa_flags & QC_AUTH_INTERRUPT_WA_BIT) {
+		rc = smblib_masked_write(chg,
+				USBIN_SOURCE_CHANGE_INTRPT_ENB_REG,
+				AUTH_IRQ_EN_CFG_BIT, AUTH_IRQ_EN_CFG_BIT);
+		if (rc < 0)
+			smblib_err(chg, "Couldn't enable HVDCP auth IRQ rc=%d\n",
+									rc);
+	}
+
+	rc = smblib_masked_write(chg, CMD_APSD_REG,
+				APSD_RERUN_BIT, APSD_RERUN_BIT);
+	if (rc < 0)
+		smblib_err(chg, "Couldn't re-run APSD rc=%d\n", rc);
+}
+
+static int try_rerun_apsd_for_hvdcp(struct smb_charger *chg)
 {
 	int rc = 0;
 
-	/* fetch the DPDM regulator */
-	if (!chg->dpdm_reg && of_get_property(chg->dev->of_node,
-				"dpdm-supply", NULL)) {
-		chg->dpdm_reg = devm_regulator_get(chg->dev, "dpdm");
-		if (IS_ERR(chg->dpdm_reg)) {
-			rc = PTR_ERR(chg->dpdm_reg);
-			smblib_err(chg, "Couldn't get dpdm regulator rc=%d\n",
-					rc);
-			chg->dpdm_reg = NULL;
-			return rc;
+	/*
+	 * PD_INACTIVE_VOTER on hvdcp_disable_votable indicates whether
+	 * apsd rerun was tried earlier
+	 */
+	if (get_client_vote(chg->hvdcp_disable_votable_indirect,
+						PD_INACTIVE_VOTER)) {
+		vote(chg->hvdcp_disable_votable_indirect,
+				PD_INACTIVE_VOTER, false, 0);
+		/* ensure hvdcp is enabled */
+		if (!get_effective_result(
+				chg->hvdcp_disable_votable_indirect)) {
+			apsd_result = smblib_get_apsd_result(chg);
+			if (apsd_result->bit & (QC_2P0_BIT | QC_3P0_BIT)) {
+				smblib_rerun_apsd(chg);
+			}
 		}
 	}
 
@@ -555,17 +581,10 @@ static const struct apsd_result *smblib_update_usb_type(struct smb_charger *chg)
 	const struct apsd_result *apsd_result = smblib_get_apsd_result(chg);
 
 	/* if PD is active, APSD is disabled so won't have a valid result */
-	if (chg->pd_active) {
-		chg->real_charger_type = POWER_SUPPLY_TYPE_USB_PD;
-	} else {
-		/*
-		 * Update real charger type only if its not FLOAT
-		 * detected as as SDP
-		 */
-		if (!(apsd_result->pst == POWER_SUPPLY_TYPE_USB_FLOAT &&
-			chg->real_charger_type == POWER_SUPPLY_TYPE_USB))
-		chg->real_charger_type = apsd_result->pst;
-	}
+	if (chg->pd_active)
+		chg->usb_psy_desc.type = POWER_SUPPLY_TYPE_USB_PD;
+	else
+		chg->usb_psy_desc.type = apsd_result->pst;
 
 	smblib_dbg(chg, PR_MISC, "APSD=%s PD=%d\n",
 					apsd_result->name, chg->pd_active);
@@ -744,12 +763,11 @@ int smblib_rerun_apsd_if_required(struct smb_charger *chg)
 	if (!val.intval)
 		return 0;
 
-	rc = smblib_request_dpdm(chg, true);
-	if (rc < 0)
-		smblib_err(chg, "Couldn't to enable DPDM rc=%d\n", rc);
-
-	chg->uusb_apsd_rerun_done = true;
-	smblib_rerun_apsd(chg);
+	apsd_result = smblib_get_apsd_result(chg);
+	if ((apsd_result->pst == POWER_SUPPLY_TYPE_UNKNOWN)
+		|| (apsd_result->pst == POWER_SUPPLY_TYPE_USB)) {
+		smblib_rerun_apsd(chg);
+	}
 
 	return 0;
 }
