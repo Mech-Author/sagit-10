@@ -48,10 +48,38 @@ bool __read_mostly walt_disabled = false;
  * Window size (in ns). Adjust for the tick size so that the window
  * rollover occurs just before the tick boundary.
  */
-__read_mostly unsigned int walt_ravg_window =
-					    (20000000 / TICK_NSEC) * TICK_NSEC;
-#define MIN_SCHED_RAVG_WINDOW ((10000000 / TICK_NSEC) * TICK_NSEC)
-#define MAX_SCHED_RAVG_WINDOW ((1000000000 / TICK_NSEC) * TICK_NSEC)
+static unsigned int max_possible_freq = 1;
+
+/*
+ * Minimum possible max_freq across all cpus. This will be same as
+ * max_possible_freq on homogeneous systems and could be different from
+ * max_possible_freq on heterogenous systems. min_max_freq is used to derive
+ * capacity (cpu_power) of cpus.
+ */
+static unsigned int min_max_freq = 1;
+
+static unsigned int max_load_scale_factor = 1024;
+static unsigned int max_possible_capacity = 1024;
+
+/* Mask of all CPUs that have  max_possible_capacity */
+static cpumask_t mpc_mask = CPU_MASK_ALL;
+
+/* Window size (in ns) */
+__read_mostly unsigned int walt_ravg_window = 20000000;
+
+/* Min window size (in ns) = 10ms */
+#ifdef CONFIG_HZ_300
+/*
+ * Tick interval becomes to 3333333 due to
+ * rounding error when HZ=300.
+ */
+#define MIN_SCHED_RAVG_WINDOW (3333333 * 6)
+#else
+#define MIN_SCHED_RAVG_WINDOW 10000000
+#endif
+
+/* Max window size (in ns) = 1s */
+#define MAX_SCHED_RAVG_WINDOW 1000000000
 
 static unsigned int sync_cpu;
 static ktime_t ktime_last;
