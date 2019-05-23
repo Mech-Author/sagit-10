@@ -26,11 +26,6 @@
 #include "step-chg-jeita.h"
 #include "storm-watch.h"
 
-
-#ifdef CONFIG_FORCE_FAST_CHARGE
-#include <linux/fastchg.h>
-#endif
-
 #define smblib_err(chg, fmt, ...)		\
 	pr_err("%s: %s: " fmt, chg->name,	\
 		__func__, ##__VA_ARGS__)	\
@@ -1903,9 +1898,19 @@ int smblib_set_prop_batt_capacity(struct smb_charger *chg,
 	return 0;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_MSM8998
+#define MAX_CURRENT_PERCENT		100
+#define HIGH_CURRENT_PERCENT		70
+#define MEDIUM_CURRENT_PERCENT		50
+#endif
 int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 				const union power_supply_propval *val)
 {
+#ifdef CONFIG_MACH_XIAOMI_MSM8998
+	int *thermal_mitigation;
+	int current_percent;
+#endif
+
 	if (val->intval < 0)
 		return -EINVAL;
 
@@ -1925,6 +1930,34 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 			THERMAL_DAEMON_VOTER, true, 0);
 
 	vote(chg->chg_disable_votable, THERMAL_DAEMON_VOTER, false, 0);
+
+#ifdef CONFIG_MACH_XIAOMI_MSM8998
+	if (chg->system_temp_level == 0)
+		return vote(chg->usb_icl_votable, THERMAL_DAEMON_VOTER, false, 0);
+
+	switch (chg->usb_psy_desc.type) {
+	case POWER_SUPPLY_TYPE_USB_HVDCP:
+		thermal_mitigation = chg->thermal_mitigation_qc2;
+		break;
+	case POWER_SUPPLY_TYPE_USB_HVDCP_3:
+		thermal_mitigation = chg->thermal_mitigation_qc3;
+		break;
+	case POWER_SUPPLY_TYPE_USB_DCP:
+	default:
+		thermal_mitigation = chg->thermal_mitigation_dcp;
+		break;
+	}
+
+	if (chg->system_temp_level == 6)
+		current_percent = MAX_CURRENT_PERCENT;
+	else if (chg->system_temp_level < 3)
+		current_percent = HIGH_CURRENT_PERCENT;
+	else
+		current_percent = MEDIUM_CURRENT_PERCENT;
+
+	vote(chg->usb_icl_votable, THERMAL_DAEMON_VOTER, true,
+			thermal_mitigation[chg->system_temp_level] * current_percent / 100);
+#else
 	if (chg->system_temp_level == 0)
 		return vote(chg->fcc_votable, THERMAL_DAEMON_VOTER, false, 0);
 
