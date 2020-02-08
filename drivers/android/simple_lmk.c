@@ -214,6 +214,13 @@ static void scan_and_kill(unsigned long pages_needed)
 		/* Send kill signal to the victim */
 		send_sig(SIGKILL, vtsk, 0);
 
+		/* Increase the victim's priority to make it die faster */
+		set_user_nice(vtsk, MIN_NICE);
+
+		/* Allow the victim to run on any CPU. This won't schedule. */
+		set_cpus_allowed_ptr(vtsk, cpu_all_mask);
+
+		/* Finally release the victim's task lock acquired earlier */
 		task_unlock(vtsk);
 	}
 
