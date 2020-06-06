@@ -60,6 +60,7 @@ D_h	.req	x14
 	.weak memmove
 ENTRY(__memmove)
 ENTRY(memmove)
+	prfm    pldl1strm, [src, #L1_CACHE_BYTES]
 	cmp	dstin, src
 	b.lo	__memcpy
 	add	tmp1, src, count
@@ -156,6 +157,7 @@ ENTRY(memmove)
 	stp	B_l, B_h, [dst, #-32]
 	stp	C_l, C_h, [dst, #-48]
 	ldp	D_l, D_h, [src, #-64]!
+	prfm    pldl1strm, [src, #(4*L1_CACHE_BYTES)]
 	stp	D_l, D_h, [dst, #-64]!
 
 	tst	count, #0x3f
