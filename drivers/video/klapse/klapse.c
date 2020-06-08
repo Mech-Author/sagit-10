@@ -106,7 +106,6 @@ static int get_minutes_before_stop(void)
 static void set_rgb(int r, int g, int b)
 {
 #if KLAPSE_MDSS
-	klapse_kcal_push(r,g,b);
 #else
 	K_RED = r;
 	K_GREEN = g;
@@ -129,9 +128,6 @@ static void set_rgb_brightness(int r,int g,int b)
 
 static void fetch_full_rgb(void)
 {
-	current_r = K_RED * 100 / dimmer;
-	current_g = K_GREEN * 100 / dimmer;
-	current_b = K_BLUE * 100 / dimmer;
 }
 
 static bool mins_in_range(unsigned int start, unsigned int stop, unsigned int check)
