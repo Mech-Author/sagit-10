@@ -37,9 +37,9 @@ static struct smb_params v1_params = {
 		.reg	= FAST_CHARGE_CURRENT_CFG_REG,
 		.min_u	= 0,
 #ifdef CONFIG_MACH_XIAOMI_MSM8998
-		.max_u	= 3300000,
+		.max_u	= 5000000,
 #else
-		.max_u	= 4500000,
+		.max_u	= 5000000,
 #endif
 		.step_u	= 25000,
 	},
@@ -48,9 +48,9 @@ static struct smb_params v1_params = {
 		.reg	= FLOAT_VOLTAGE_CFG_REG,
 		.min_u	= 3487500,
 #ifdef CONFIG_MACH_XIAOMI_MSM8998
-		.max_u	= 4400000,
+		.max_u	= 5000000,
 #else
-		.max_u	= 4920000,
+		.max_u	= 5000000,
 #endif
 		.step_u	= 7500,
 	},
