@@ -148,7 +148,7 @@ static int mem_process_reclaim(pid_t pid, int type, int nr_to_reclaim)
 	struct mm_struct *mm;
 	struct vm_area_struct *vma;
 	struct mm_walk reclaim_walk = {};
-	struct reclaim_param rp;
+	
 	int ret = 0;
 
 	task = find_get_task_by_pid(pid);
@@ -162,12 +162,12 @@ static int mem_process_reclaim(pid_t pid, int type, int nr_to_reclaim)
 	}
 
 	reclaim_walk.mm = mm;
-	reclaim_walk.pmd_entry = reclaim_pte_range;
+	
 
-	rp.nr_scanned = 0;
-	rp.nr_to_reclaim = nr_to_reclaim;
-	rp.nr_reclaimed = 0;
-	reclaim_walk.private = &rp;
+	
+
+
+
 
 	down_read(&mm->mmap_sem);
 
@@ -181,7 +181,7 @@ static int mem_process_reclaim(pid_t pid, int type, int nr_to_reclaim)
 		if (type == RECLAIM_PAGE_FILE && !vma->vm_file)
 			continue;
 
-		rp.vma = vma;
+		
 		ret = walk_page_range(vma->vm_start, vma->vm_end,
 				      &reclaim_walk);
 		if (ret)
@@ -201,8 +201,8 @@ out:
 	if (ret == -EPIPE)
 		ret = 0;
 
-	pr_info("process reclaim: pid %d, page_type %d, try to reclaim %d, reclaimed %d(scan %d)\n",
-		pid, type, nr_to_reclaim, rp.nr_reclaimed, rp.nr_scanned);
+
+
 
 	return ret;
 }
@@ -217,13 +217,13 @@ static int mem_global_reclaim(unsigned long nr_to_reclaim)
 
 	/* Currently we only consider loops instead of nr_to_reclaim */
 	while (loop--) {
-		nr_reclaimed += reclaim_global(RECLAIM_PAGES_PER_LOOP);
+		
 
 		if (nr_reclaimed >= nr_to_reclaim)
 			break;
 	}
 	if (remain && (nr_reclaimed < nr_to_reclaim))
-		nr_reclaimed += reclaim_global(remain);
+		
 
 	pr_info("global reclaim: try to reclaim %ld, reclaimed %ld\n",
 		nr_to_reclaim, nr_reclaimed);
