@@ -1,0 +1,23 @@
+ #!/bin/bash
+
+echo -e "\033[31m Fiee-Kernel 开始编译 \033[0m"
+startm=$(date +%M)
+starts=$(date +%s)
+
+export PATH=/lib/llvm-10/bin:$PATH
+
+cd Mi6-10
+rm -rf out
+export ARCH=arm64
+export SUBARCH=arm64
+export HEADER_ARCH=arm64
+make O=out ARCH=arm64 SUBARCH=arm64 CC=/root/clang/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=/root/gcc/bin/aarch64-linux-gnu- CROSS_COMPILE_ARM32=/usr/bin/arm-linux-gnueabi-  sagit_defconfig
+make -j4 O=out ARCH=arm64 SUBARCH=arm64 CC=/root/clang/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=/root/gcc/bin/aarch64-linux-gnu- CROSS_COMPILE_ARM32=/usr/bin/arm-linux-gnueabi-
+cd /root/Mi6-10
+bash build
+endm=$(date +%M)
+ends=$(date +%s)
+takem=$(( endm - startm ))
+takes=$(( ends - starts ))
+echo -e "\033[31m Ues time ${takem}min ${takes}seconds. \033[0m"
+
