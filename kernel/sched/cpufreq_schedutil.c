@@ -810,10 +810,7 @@ static int cpufreq_schedutil_cb(struct cpufreq_policy *policy,
 	}
 }
 
-#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL
-static
-#endif
-struct cpufreq_governor cpufreq_gov_schedutil = {
+static struct cpufreq_governor cpufreq_gov_schedutil = {
 	.name = "schedutil",
 	.governor = cpufreq_schedutil_cb,
 	.owner = THIS_MODULE,
