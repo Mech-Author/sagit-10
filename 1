@@ -1,0 +1,12 @@
+ #!/bin/bash
+args="-j$(nproc --all) \
+O=out \
+ARCH=arm64 \
+CLANG_TRIPLE=aarch64-linux-gnu- \
+CROSS_COMPILE=/root/gcc/bin/aarch64-linux-gnu- \
+CC=/root/clang/bin/clang \
+CROSS_COMPILE_ARM32=/root/gcc/bin/arm-linux-gnueabi- "
+make ${args} sagit_defconfig
+make ${args}
+cd /root/Mi6-10
+bash build
