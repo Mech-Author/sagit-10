@@ -1,23 +1,72 @@
- #!/bin/bash
+#!/usr/bin/env bash
 
-echo -e "\033[31m Fiee-Kernel 开始编译 \033[0m"
-startm=$(date +%M)
-starts=$(date +%s)
+# Function to show an informational message
+function msg() {
+    echo -e "\e[1;32m$@\e[0m"
+}
 
-export PATH=/lib/llvm-10/bin:$PATH
+# Exit on error
+set -e
 
-cd Mi6-10
-rm -rf out
-export ARCH=arm64
-export SUBARCH=arm64
-export HEADER_ARCH=arm64
-make O=out ARCH=arm64 SUBARCH=arm64 CC=/root/clang/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=/root/gcc/bin/aarch64-linux-gnu- CROSS_COMPILE_ARM32=/usr/bin/arm-linux-gnueabi-  sagit_defconfig
-make -j4 O=out ARCH=arm64 SUBARCH=arm64 CC=/root/clang/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=/root/gcc/bin/aarch64-linux-gnu- CROSS_COMPILE_ARM32=/usr/bin/arm-linux-gnueabi-
-cd /root/Mi6-10
-bash build
-endm=$(date +%M)
-ends=$(date +%s)
-takem=$(( endm - startm ))
-takes=$(( ends - starts ))
-echo -e "\033[31m Ues time ${takem}min ${takes}seconds. \033[0m"
+msg 当前时间`date '+%Y %m%d_%H.%M.%S'`
+
+msg "下载工具..."
+if [ -e /root/tc-build ] ;then
+           msg "工具已下载跳过...."
+else
+           git clone https://github.com/wloot/tc-build    
+fi
+
+sleep 5
+msg "安装软件..."
+apt update && apt install bc bison ca-certificates ccache clang cmake curl file flex gcc g++ git libelf-dev  libssl-dev make ninja-build python3 texinfo u-boot-tools zlib1g-dev lld -y
+
+sleep 5
+msg "开始编译..."
+cd tc-build
+./build-llvm.py \
+	--clang-vendor "Acme_Clang$(date +%Y%m%d)" \
+# 项目
+		--projects "clang;lld;llvm" \
+# 适用的平台 arm32,aarch64,mips,powerpc,x86
+		--targets "AArch64" \
+# 增量
+		--incremental \
+# 仅编译stage1
+		--build-stage1-only \
+
+sleep 5
+msg "Package file ..."
+cd build/llvm && tar cvf stage1.tar stage1 && zstd stage1.tar
+
+if [ -e /sdcard ] ;then
+           msg "Continue..."
+else
+           msg "Copying..."
+           cp stage1.tar.zst /home/clang11_aarch64_`date '+%Y%m%d_%H.%M.%S'`.tar.zst && cp stage1.tar.zst /root/clang11_aarch64_`date '+%Y%m%d_%H.%M.%S'`.tar.zst
+           
+           sleep 5           
+           msg "Clean up the files ..."
+           rm stage1.tar && rm stage1.tar.zst
+           
+           sleep 5
+           msg "done!请在/home或/root目录下查看
+           exit
+fi
+
+msg "Copying..."
+if [ -e /sdcard/clang11编译 ] ;then
+           msg Copying....
+           cp stage1.tar.zst /sdcard/clang11编译/clang11_aarch64_`date '+%Y%m%d_%H.%M.%S'`.tar.zst
+else
+           mkdir /sdcard/clang11编译 && cp stage1.tar.zst /sdcard/clang11编译/clang11_aarch64_`date '+%Y%m%d_%H.%M.%S'`.tar.zst           
+           
+           sleep 5           
+           msg "Clean up the files ..."
+           rm stage1.tar && rm stage1.tar.zst
+
+           sleep 5
+           msg "done! 请在/sdcard/clang11编译下查看"
+           exit
+fi
 
