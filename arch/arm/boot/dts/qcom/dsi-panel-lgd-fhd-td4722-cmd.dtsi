@@ -1,5 +1,5 @@
 /* Copyright (c) 2015, The Linux Foundation. All rights reserved.
- * Copyright (C) 2017 XiaoMi, Inc.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,9 +17,10 @@
  * VERSION = "1.0"
  *---------------------------------------------------------------------------*/
 &soc {
-	dsi_lgd_fhd_td4322_cmd: qcom,mdss_dsi_lgd_fhd_td4322_cmd {
+	dsi_lgd_fhd_td4722_cmd: qcom,mdss_dsi_lgd_fhd_td4722_cmd {
 		qcom,mdss-dsi-panel-name = "lgd fhd cmd incell dsi panel";
 		qcom,mdss-dsi-panel-id = <1>;
+		qcom,mdss-dsi-panel-model = "LGD FHD TD4322 CMD PANEL";
 		qcom,mdss-dsi-panel-sleepwrmod = <0>;
 		qcom,mdss-dsi-panel-type = "dsi_cmd_mode";
 		qcom,mdss-dsi-panel-framerate = <60>;
@@ -43,12 +44,12 @@
 		qcom,mdss-dsi-underflow-color = <0xff>;
 		qcom,mdss-dsi-border-color = <0>;
 		qcom,mdss-dsi-on-command = [
-				15 00 00 00 00 00 02 51 ff
+				15 00 00 00 00 00 02 51 FF
 				15 00 00 00 00 00 02 53 24
 				15 00 00 00 00 00 02 55 00
 				15 00 00 00 00 00 02 35 00
 				39 01 00 00 00 00 05 30 00 00 02 A7
-				05 01 00 00 46 00 02 11 00
+				05 01 00 00 78 00 02 11 00
 				05 01 00 00 14 00 02 29 00
 				29 00 00 00 00 00 02 B0 04
 				39 00 00 00 00 00 02 84 00
@@ -61,6 +62,10 @@
 				05 01 00 00 78 00 02 10 00];
 		qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
 		qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
+		qcom,mdss-dsi-displayoff-command = [05 01 00 00 20 00 02 28 00];
+		qcom,mdss-dsi-displayon-command = [05 01 00 00 20 00 02 29 00];
+		qcom,mdss-dsi-displayoff-command-state = "dsi_hs_mode";
+		qcom,mdss-dsi-displayon-command-state = "dsi_hs_mode";
 		qcom,esd-check-enabled;
 		qcom,mdss-dsi-panel-status-check-mode = "reg_multi_read";
 		/* mdss-dsi-panel-status-command store all ESD releated commands and expected
@@ -93,7 +98,7 @@
 		qcom,mdss-dsi-dma-trigger = "trigger_sw";
 		qcom,mdss-dsi-mdp-trigger = "none";
 		qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
-		qcom,mdss-dsi-reset-sequence = <0 1>, <1 20>;
+		qcom,mdss-dsi-reset-sequence = <0 1>, <1 160>;
 		qcom,mdss-pan-physical-width-dimension = <64>;
 		qcom,mdss-pan-physical-height-dimension = <114>;
 		qcom,mdss-dsi-te-pin-select = <1>;
