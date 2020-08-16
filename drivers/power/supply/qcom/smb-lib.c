@@ -48,9 +48,6 @@
 				__func__, ##__VA_ARGS__);	\
 	} while (0)
 
-static unsigned int forced_current = 0;
-module_param(forced_current, uint, S_IWUSR | S_IRUGO);
-
 static bool is_secure(struct smb_charger *chg, int addr)
 {
 	if (addr == SHIP_MODE_REG || addr == FREQ_CLK_DIV_REG)
@@ -920,8 +917,9 @@ int smblib_set_icl_current(struct smb_charger *chg, int icl_ua)
 	if (icl_ua < USBIN_25MA)
 		return smblib_set_usb_suspend(chg, true);
 
-	if (forced_current)
-		return op_usb_icl_set(chg, forced_current * 1000);
+#ifdef CONFIG_MACH_XIAOMI_MSM8998
+	disable_irq_nosync(chg->irq_info[USBIN_ICL_CHANGE_IRQ].irq);
+#endif
 
 	if (icl_ua == INT_MAX)
 		goto override_suspend_config;
@@ -2743,15 +2741,8 @@ static int smblib_handle_usb_current(struct smb_charger *chg,
 int smblib_set_prop_sdp_current_max(struct smb_charger *chg,
 				    const union power_supply_propval *val)
 {
-	int rc;
+	int rc = 0;
 
-	if (forced_current)
-		return op_usb_icl_set(chg, forced_current * 1000);
-
-	rc = 0;
-
-	/* david.liu@bsp, 20161014 Add charging standard */
-	pr_err("set usb current_max=%d\n", val->intval);
 	if (!chg->pd_active) {
 		rc = smblib_handle_usb_current(chg, val->intval);
 	} else if (chg->system_suspend_supported) {
