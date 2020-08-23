@@ -188,8 +188,18 @@ static void do_input_boost_rem(struct work_struct *work)
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	/* Reset dynamic stune boost value to the default value */
-	reset_stune_boost("top-app", boost_slot);
-	stune_boost_active = false;
+	
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
+	/* Update policies for all online CPUs */
+	update_policy_online();
+
+	if (sched_boost_active) {
+		ret = sched_set_boost(0);
+		if (ret)
+			pr_err("cpu-boost: HMP boost disable failed\n");
+		sched_boost_active = false;
+	}
 }
 
 static void do_input_boost(struct work_struct *work)
@@ -203,12 +213,29 @@ static void do_input_boost(struct work_struct *work)
 		sched_boost_active = false;
 	}
 
-	/* Set dynamic stune boost value */
-	if (!stune_boost_active) {
-		ret = do_stune_boost("top-app", dynamic_stune_boost, &boost_slot);
-		if (!ret)
-			stune_boost_active = true;
+	/* Set the input_boost_min for all CPUs in the system */
+	pr_debug("Setting input boost min for all CPUs\n");
+	for_each_possible_cpu(i) {
+		i_sync_info = &per_cpu(sync_info, i);
+		i_sync_info->input_boost_min = i_sync_info->input_boost_freq;
 	}
+
+	/* Update policies for all online CPUs */
+	update_policy_online();
+
+	/* Enable scheduler boost to migrate tasks to big cluster */
+	if (sched_boost_on_input) {
+		ret = sched_set_boost(1);
+		if (ret)
+			pr_err("cpu-boost: HMP boost enable failed\n");
+		else
+			sched_boost_active = true;
+	}
+
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	/* Set dynamic stune boost value */
+	
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 	queue_delayed_work(cpu_boost_wq, &input_boost_rem,
 					msecs_to_jiffies(input_boost_ms));
