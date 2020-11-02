@@ -131,10 +131,6 @@ fi
 
 args+="CROSS_COMPILE_ARM32=$gcc4_32_path "
 
-clean(){
-	make mrproper
-	make $args mrproper
-}
 
 build_Mix2(){
 	export KBUILD_BUILD_USER="Mix2"
