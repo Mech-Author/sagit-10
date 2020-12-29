@@ -147,6 +147,7 @@ static uint32_t msm_lmh_mitigation_notify(struct msm_lmh_dcvs_hw *hw)
 	rcu_read_unlock();
 	max_limit = FREQ_HZ_TO_KHZ(freq_val);
 
+	sched_update_cpu_freq_min_max(&hw->core_map, 0, max_limit);
 	trace_lmh_dcvs_freq(cpumask_first(&hw->core_map), max_limit);
 
 notify_exit:
@@ -373,6 +374,16 @@ static struct cpu_cooling_ops cd_ops = {
 	.ceil_limit = lmh_set_max_limit,
 };
 
+int msm_lmh_dcvsh_sw_notify(int cpu)
+{
+	struct msm_lmh_dcvs_hw *hw = get_dcvsh_hw_from_cpu(cpu);
+
+	if (!hw)
+		return -EINVAL;
+
+	lmh_dcvs_notify(hw);
+	return 0;
+}
 
 static int __ref lmh_dcvs_cpu_callback(struct notifier_block *nfb,
 		unsigned long action, void *hcpu)

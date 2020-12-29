@@ -26,7 +26,10 @@ static DEFINE_PER_CPU(struct cs_cpu_dbs_info_s, cs_cpu_dbs_info);
 static int cs_cpufreq_governor_dbs(struct cpufreq_policy *policy,
 				   unsigned int event);
 
-static struct cpufreq_governor cpufreq_gov_conservative = {
+#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
+static
+#endif
+struct cpufreq_governor cpufreq_gov_conservative = {
 	.name			= "conservative",
 	.governor		= cs_cpufreq_governor_dbs,
 	.max_transition_latency	= TRANSITION_LATENCY_LIMIT,
@@ -396,11 +399,6 @@ MODULE_DESCRIPTION("'cpufreq_conservative' - A dynamic cpufreq governor for "
 MODULE_LICENSE("GPL");
 
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
-struct cpufreq_governor *cpufreq_default_governor(void)
-{
-	return &cpufreq_gov_conservative;
-}
-
 fs_initcall(cpufreq_gov_dbs_init);
 #else
 module_init(cpufreq_gov_dbs_init);

@@ -389,10 +389,6 @@
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_jdi_nt35596s>;
 };
 
-&dsi_ebbg_fhd_ft8716_video {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_ebbg_ft8716>;
-};
-
 &mem_client_3_size {
 	qcom,peripheral-size = <0x500000>;
 };
@@ -807,8 +803,8 @@
 /{
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
-		#include "batterydata-chiron-atl-3400mAh.dtsi"
-		#include "batterydata-chiron-cos-3400mAh.dtsi"
+		#include "batterydata-d5-atl-3400mAh.dtsi"
+		#include "batterydata-d5-cos-3400mAh.dtsi"
 		#include "batterydata-itech-3020mAh.dtsi"
 	};
 };

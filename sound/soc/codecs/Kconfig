@@ -1010,6 +1010,5 @@ source "sound/soc/codecs/msm_sdw/Kconfig"
 
 config SOUND_CONTROL
 	bool "Sound control for wcd9335"
-	default y
 
 endmenu

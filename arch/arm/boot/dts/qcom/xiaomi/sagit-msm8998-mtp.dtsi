@@ -823,7 +823,7 @@
 	qcom,thermal-mitigation-dcp
 				= <1800000 1600000 1400000 1200000 1000000 1000000 1000000>;
 	qcom,thermal-mitigation-qc3
-				= <3000000 2425000 2125000 1825000 1525000 1225000 1025000>;
+				= <3000000 2425000 2125000 1825000 1525000 1225000 925000>;
 	qcom,thermal-mitigation-qc2
 				= <1600000 1400000 1200000 1000000 900000 900000 900000>;
 };
@@ -847,8 +847,9 @@
 /{
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
-		#include "batterydata-sagit-atl-3350mAh.dtsi"
-		#include "batterydata-sagit-sdi-3440mAh.dtsi"
+		#include "batterydata-c1-atl-3350mAh.dtsi"
+		#include "batterydata-c1-sdi-3440mAh.dtsi"
+		#include "batterydata-stic-atl-4000mAh.dtsi"
 		#include "batterydata-itech-3020mAh.dtsi"
 	};
 };

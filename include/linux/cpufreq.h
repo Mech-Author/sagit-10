@@ -54,24 +54,6 @@ struct cpufreq_cpuinfo {
 struct cpufreq_user_policy {
 	unsigned int		min;    /* in kHz */
 	unsigned int		max;    /* in kHz */
-	unsigned char target_loads_a;
-	unsigned int above_hispeed_delay_a;
-	unsigned int hispeed_freq_a;
-	unsigned int go_hispeed_load_a;
-	unsigned int min_sample_time_a;
-	unsigned int timer_rate_a;
-	unsigned int timer_slack_a;
-	unsigned int boost_a;
-	unsigned int boostpulse_a;
-	unsigned int boostpulse_duration_a;
-	unsigned int io_is_busy_a;
-	unsigned int use_sched_load_a;
-	unsigned int use_migration_notif_a;
-	unsigned int max_freq_hysteresis_a;
-	unsigned int align_windows_a;
-	unsigned int ignore_hispeed_on_notif_a;
-	unsigned int fast_ramp_down_a;
-	unsigned int enable_prediction_a;
 };
 
 struct cpufreq_policy {
@@ -84,24 +66,6 @@ struct cpufreq_policy {
 						should set cpufreq */
 	unsigned int		cpu;    /* cpu managing this policy, must be online */
 
-	unsigned char target_loads_a;
-	unsigned int above_hispeed_delay_a;
-	unsigned int hispeed_freq_a;
-	unsigned int go_hispeed_load_a;
-	unsigned int min_sample_time_a;
-	unsigned int timer_rate_a;
-	unsigned int timer_slack_a;
-	unsigned int boost_a;
-	unsigned int boostpulse_a;
-	unsigned int boostpulse_duration_a;
-	unsigned int io_is_busy_a;
-	unsigned int use_sched_load_a;
-	unsigned int use_migration_notif_a;
-	unsigned int max_freq_hysteresis_a;
-	unsigned int align_windows_a;
-	unsigned int ignore_hispeed_on_notif_a;
-	unsigned int fast_ramp_down_a;
-	unsigned int enable_prediction_a;
 	struct clk		*clk;
 	struct cpufreq_cpuinfo	cpuinfo;/* see above */
 
@@ -247,48 +211,6 @@ struct freq_attr {
 	ssize_t (*show)(struct cpufreq_policy *, char *);
 	ssize_t (*store)(struct cpufreq_policy *, const char *, size_t count);
 };
-
-extern int cpufreq_set_policy(struct cpufreq_policy *policy,
-				struct cpufreq_policy *new_policy);
-/**
- * cpufreq_per_cpu_attr_read() / show_##file_name() -
- * print out cpufreq information
- *
- * Write out information from cpufreq_driver->policy[cpu]; object must be
- * "unsigned int".
- */
-#define show_one(file_name, object)			\
-static ssize_t show_##file_name				\
-(struct cpufreq_policy *policy, char *buf)		\
-{							\
-	return sprintf(buf, "%u\n", policy->object);	\
-}
-
-/**
- * cpufreq_per_cpu_attr_write() / store_##file_name() - sysfs write access
- */
-#define store_one(file_name, object)			\
-static ssize_t store_##file_name					\
-(struct cpufreq_policy *policy, const char *buf, size_t count)		\
-{									\
-	int ret, temp;							\
-	struct cpufreq_policy new_policy;				\
-									\
-	memcpy(&new_policy, policy, sizeof(*policy));			\
-	new_policy.min = policy->user_policy.min;			\
-	new_policy.max = policy->user_policy.max;			\
-									\
-	ret = sscanf(buf, "%u", &new_policy.object);			\
-	if (ret != 1)							\
-		return -EINVAL;						\
-									\
-	temp = new_policy.object;					\
-	ret = cpufreq_set_policy(policy, &new_policy);		\
-	if (!ret)							\
-		policy->user_policy.object = temp;			\
-									\
-	return ret ? ret : count;					\
-}
 
 #define cpufreq_freq_attr_ro(_name)		\
 static struct freq_attr _name =			\
@@ -580,30 +502,11 @@ unsigned int cpufreq_driver_resolve_freq(struct cpufreq_policy *policy,
 int cpufreq_register_governor(struct cpufreq_governor *governor);
 void cpufreq_unregister_governor(struct cpufreq_governor *governor);
 
-struct cpufreq_governor *cpufreq_default_governor(void);
-struct cpufreq_governor *cpufreq_fallback_governor(void);
-
-static inline void cpufreq_policy_apply_limits(struct cpufreq_policy *policy)
-{
-	if (policy->max < policy->cur)
-		__cpufreq_driver_target(policy, policy->max, CPUFREQ_RELATION_H);
-	else if (policy->min > policy->cur)
-		__cpufreq_driver_target(policy, policy->min, CPUFREQ_RELATION_L);
-}
-
-/* Governor attribute set */
-struct gov_attr_set {
-	struct kobject kobj;
-	struct list_head policy_list;
-	struct mutex update_lock;
-	int usage_count;
-};
-
-/* sysfs ops for cpufreq governors */
-extern const struct sysfs_ops governor_sysfs_ops;
- /* Performance governor is fallback governor if any other gov failed to
-  auto load due latency restrictions
-*/
+/* CPUFREQ DEFAULT GOVERNOR */
+/*
+ * Performance governor is fallback governor if any other gov failed to auto
+ * load due latency restrictions
+ */
 #ifdef CONFIG_CPU_FREQ_GOV_PERFORMANCE
 extern struct cpufreq_governor cpufreq_gov_performance;
 #endif
@@ -624,13 +527,32 @@ extern struct cpufreq_governor cpufreq_gov_conservative;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE)
 extern struct cpufreq_governor cpufreq_gov_interactive;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_interactive)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_LOLZNAPPY)
-extern struct cpufreq_governor cpufreq_gov_lolznappy;
-#define CPUFREQ_DEFAULT_GOVERNOR        (&cpufreq_gov_lolznappy)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_BLU_ACTIVE)
-extern struct cpufreq_governor cpufreq_gov_blu_active;
-#define CPUFREQ_DEFAULT_GOVERNOR        (&cpufreq_gov_blu_active)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SCHED)
+extern struct cpufreq_governor cpufreq_gov_sched;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_sched)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL)
+extern struct cpufreq_governor cpufreq_gov_schedutil;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_schedutil)
 #endif
+
+static inline void cpufreq_policy_apply_limits(struct cpufreq_policy *policy)
+{
+	if (policy->max < policy->cur)
+		__cpufreq_driver_target(policy, policy->max, CPUFREQ_RELATION_H);
+	else if (policy->min > policy->cur)
+		__cpufreq_driver_target(policy, policy->min, CPUFREQ_RELATION_L);
+}
+
+/* Governor attribute set */
+struct gov_attr_set {
+	struct kobject kobj;
+	struct list_head policy_list;
+	struct mutex update_lock;
+	int usage_count;
+};
+
+/* sysfs ops for cpufreq governors */
+extern const struct sysfs_ops governor_sysfs_ops;
 
 void gov_attr_set_init(struct gov_attr_set *attr_set, struct list_head *list_node);
 void gov_attr_set_get(struct gov_attr_set *attr_set, struct list_head *list_node);
