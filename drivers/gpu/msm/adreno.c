@@ -883,27 +883,6 @@ static int adreno_probe(struct platform_device *pdev)
 
 	/* Initialize coresight for the target */
 	adreno_coresight_init(adreno_dev);
-<<<<<<< HEAD
-
-#ifdef CONFIG_INPUT
-	if (!device->pwrctrl.input_disable) {
-		adreno_input_handler.private = device;
-		/*
-		 * It isn't fatal if we cannot register the input handler.  Sad,
-		 * perhaps, but not fatal
-		 */
-		if (input_register_handler(&adreno_input_handler)) {
-			adreno_input_handler.private = NULL;
-			KGSL_DRV_ERR(device,
-				"Unable to register the input handler\n");
-		}
-	}
-#endif
-
-	place_marker("M - DRIVER GPU Ready");
-
-=======
->>>>>>> 8eb8332ba91b... msm: kgsl: Wake GPU upon receiving an ioctl rather than upon touch input
 out:
 	if (status) {
 		adreno_ringbuffer_close(adreno_dev);
