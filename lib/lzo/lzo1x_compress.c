@@ -17,7 +17,6 @@
 #include <linux/lzo.h>
 #include "lzodefs.h"
 
-/* lzo-check */
 #define OVERFLOW_ADD_CHECK(a, b)  \
 		(((a) + (b)) < (a))
 
