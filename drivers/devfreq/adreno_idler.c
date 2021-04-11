@@ -88,7 +88,7 @@ int adreno_idler(struct devfreq_dev_status stats, struct devfreq *devfreq,
 			return 1;
 		}
 	} else {
-		idlecount = 0;
+		idle_lasttime = 0;
 		/* Do not return 1 here and allow rest of the algorithm to
 		   figure out the appropriate frequency for current workload.
 		   It can even set it back to lowest frequency. */
