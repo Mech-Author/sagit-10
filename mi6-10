@@ -15,7 +15,7 @@ make -j$(nproc --all) O=out \
                      OBJCOPY=/clang/bin/llvm-objcopy NM=/clang/bin/llvm-nm AR=/clang/bin/llvm-ar 2>&1|tee kernel.log \
 endm=$(date +%m)
 ends=$(date +%s)
-takem=$(( endm - start ))
+takem=$(( endm - startm ))
 takes=$(( ends - starts ))
 echo -e "\033[31m Ues time ${takem}min ${takes}seconds. \033[0m"
 

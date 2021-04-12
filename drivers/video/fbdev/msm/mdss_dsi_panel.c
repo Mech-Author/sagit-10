@@ -2111,9 +2111,6 @@ static void mdss_dsi_parse_esd_params(struct device_node *np,
 			"qcom,mdss-dsi-panel-status-command",
 				"qcom,mdss-dsi-panel-status-command-state");
 
-	if (ctrl->status_mode == ESD_REG_MULTI)
-		return;
-
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-panel-max-error-count",
 		&tmp);
 	ctrl->max_status_error_count = (!rc ? tmp : 0);
