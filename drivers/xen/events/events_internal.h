@@ -37,6 +37,10 @@ struct irq_info {
 	unsigned irq;
 	unsigned int evtchn;	/* event channel */
 	unsigned short cpu;	/* cpu bound */
+	unsigned short eoi_cpu;	/* EOI must happen on this cpu */
+	unsigned int irq_epoch;	/* If eoi_cpu valid: irq_epoch of event */
+	u64 eoi_time;		/* Time in jiffies when to EOI. */
+	raw_spinlock_t lock;
 
 	union {
 		unsigned short virq;
