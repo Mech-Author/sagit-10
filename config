@@ -1,5 +1,5 @@
  #!/bin/bash
 export ARCH=arm64
-target=sagit_defconfig
+target=chiron_defconfig
 make ${target}
 cp .config arch/${ARCH}/configs/${target}
