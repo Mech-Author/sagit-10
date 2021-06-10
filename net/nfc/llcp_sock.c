@@ -120,6 +120,8 @@ static int llcp_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 					  GFP_KERNEL);
 	if (!llcp_sock->service_name) {
 		nfc_llcp_local_put(llcp_sock->local);
+		llcp_sock->local = NULL;
+		llcp_sock->dev = NULL;
 		ret = -ENOMEM;
 		goto put_dev;
 	}
@@ -128,6 +130,7 @@ static int llcp_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 		nfc_llcp_local_put(llcp_sock->local);
 		kfree(llcp_sock->service_name);
 		llcp_sock->service_name = NULL;
+		llcp_sock->dev = NULL;
 		ret = -EADDRINUSE;
 		goto put_dev;
 	}
