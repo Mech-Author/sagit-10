@@ -22,7 +22,7 @@ export PATH=~/.gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH
 export CROSS_COMPILE=aarch64-none-linux-gnu-
 
 # CMP
-git clone https://github.com/1498610052/sagit-10
+git clone https://github.com/Mech-Author/sagit-10
 cd sagit-10
 make clean 
 make mrproper 
