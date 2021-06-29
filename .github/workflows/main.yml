@@ -1,0 +1,29 @@
+name: Build Kernel Mi6-10
+on:
+  push:
+    branches:    
+      - demon
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Init Repo
+      run: |
+        cd ~
+        git clone https://github.com/1498610052/sagit-10.git -b demon --depth=1 
+    - name: Build With Shell
+      run: |
+        cd ~/op5
+        bash build_full.sh
+    - name: Package With AnyKernel
+      run: |
+        cd ~
+        cp sagit-10/AnyKernel ./ -r
+        cd AnyKernel/
+        cp ../sagit-10/out/arch/arm64/boot/Image.gz-dtb  ./
+    - name : Upload artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: Mi6-10.zip
+        path: /home/runner/AnyKernel/
