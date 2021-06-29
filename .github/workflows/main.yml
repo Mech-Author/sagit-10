@@ -14,7 +14,7 @@ jobs:
         git clone https://github.com/1498610052/sagit-10.git -b demon --depth=1 
     - name: Build With Shell
       run: |
-        cd ~/op5
+        cd ~/sagit-10
         bash build_full.sh
     - name: Package With AnyKernel
       run: |
