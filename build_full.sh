@@ -1,6 +1,6 @@
  #!/bin/bash
 # Environment Install takes 1h10m, Build takes 
-# On E3 1270 v6, 4c8t-3.7Ghz 32G RAM With SSD
+# On E3 1270 v6, 4c8t-3.7Ghz 32G RAM With SSD.
 
 cd ~
 
